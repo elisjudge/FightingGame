@@ -94,10 +94,18 @@ export class Game {
 
     moveFighter(fighter) {
         fighter.velocity.x = 0;
-        if (fighter.movements.moveLeft.pressed && ["moveLeft", "jump"].includes(fighter.lastKey)) {
+        if (
+            fighter.movements.moveLeft.pressed && 
+            ["moveLeft", "jump"].includes(fighter.lastKey) &&
+            fighter.position.x > 0
+        ) {
             fighter.velocity.x = -this.physics.velocities.move;
             fighter.switchSprite("run");
-        } else if (fighter.movements.moveRight.pressed && ["moveRight", "jump"].includes(fighter.lastKey)) {
+        } else if (
+            fighter.movements.moveRight.pressed && 
+            ["moveRight", "jump"].includes(fighter.lastKey) &&
+            fighter.position.x < this.window.canvas.width - fighter.width
+        ) {
             fighter.velocity.x = this.physics.velocities.move;
             fighter.switchSprite("run");
         } else {
