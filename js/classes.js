@@ -146,8 +146,11 @@ export class Fighter extends Sprite {
         //     this.attackBox.height
         // );
 
-        this.position.x += this.velocity.x;
-        this.position.y += this.velocity.y;
+        if (this.image !== this.sprites.death.image) {
+            this.position.x += this.velocity.x;
+            this.position.y += this.velocity.y;
+        }
+
 
         if (this.position.y + this.height >= this.window.canvas.height - this.window.floorOffset) {
             this.velocity.y = 0;
@@ -173,6 +176,8 @@ export class Fighter extends Sprite {
     switchSprite(sprite) {
         // give priority to death animation over all others
         if (this.image === this.sprites.death.image) {
+            this.velocity.x = 0;
+            this.velocity.y = 0;
             if (this.framesCurrent === this.sprites.death.framesMax - 1) this.dead = true;
             return;
         }

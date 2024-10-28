@@ -3,7 +3,7 @@ import * as physics from './physics.js'
 import { Sprite, Fighter } from './classes.js';
 import { background, shop } from './background-assets.js';
 import { player, enemy } from './fighters.js';
-import { addKeyListeners } from './input-handlers.js'
+import { addKeyListeners, removeKeyDown, removeKeyUp } from './input-handlers.js'
 
 export class Game {
     constructor () {
@@ -21,6 +21,7 @@ export class Game {
         this.keyListener = addKeyListeners(this.fighters);
         this.lastFrameTime = performance.now(); 
         this.fps = 0;
+        this.gameOver = false;
     }
 
     start() {
@@ -94,32 +95,34 @@ export class Game {
 
     moveFighter(fighter) {
         fighter.velocity.x = 0;
-        if (
-            fighter.movements.moveLeft.pressed && 
-            ["moveLeft", "jump"].includes(fighter.lastKey) &&
-            fighter.position.x > 0
-        ) {
-            fighter.velocity.x = -this.physics.velocities.move;
-            fighter.switchSprite("run");
-        } else if (
-            fighter.movements.moveRight.pressed && 
-            ["moveRight", "jump"].includes(fighter.lastKey) &&
-            fighter.position.x < this.window.canvas.width - fighter.width
-        ) {
-            fighter.velocity.x = this.physics.velocities.move;
-            fighter.switchSprite("run");
-        } else {
-            fighter.switchSprite("idle");
-        }
-        if (fighter.movements.jump.pressed &&
-            ["moveLeft", "moveRight", "jump"].includes(fighter.lastKey) && 
-            fighter.position.y + fighter.height === this.window.canvas.height - this.window.floorOffset) {
-            fighter.velocity.y = -this.physics.velocities.jump;
-        }
-        if (fighter.velocity.y < 0) {
-            fighter.switchSprite("jump");
-        } else if (fighter.velocity.y > 0) {
-            fighter.switchSprite("fall");
+        if (!this.gameOver) {
+            if (
+                fighter.movements.moveLeft.pressed && 
+                ["moveLeft", "jump"].includes(fighter.lastKey) &&
+                fighter.position.x > 0
+            ) {
+                fighter.velocity.x = -this.physics.velocities.move;
+                fighter.switchSprite("run");
+            } else if (
+                fighter.movements.moveRight.pressed && 
+                ["moveRight", "jump"].includes(fighter.lastKey) &&
+                fighter.position.x < this.window.canvas.width - fighter.width
+            ) {
+                fighter.velocity.x = this.physics.velocities.move;
+                fighter.switchSprite("run");
+            } else {
+                fighter.switchSprite("idle");
+            }
+            if (fighter.movements.jump.pressed &&
+                ["moveLeft", "moveRight", "jump"].includes(fighter.lastKey) && 
+                fighter.position.y + fighter.height === this.window.canvas.height - this.window.floorOffset) {
+                fighter.velocity.y = -this.physics.velocities.jump;
+            }
+            if (fighter.velocity.y < 0) {
+                fighter.switchSprite("jump");
+            } else if (fighter.velocity.y > 0) {
+                fighter.switchSprite("fall");
+            }
         }
     }
 
@@ -129,7 +132,9 @@ export class Game {
         this.refreshBackground();
         this.addBackgroundShading();
         this.refreshFighters();
-        this.checkWinner();
+        if (!this.gameOver) {
+            this.checkWinner();
+        }
         this.getFrame();
     }
 
@@ -215,10 +220,44 @@ export class Game {
     
         if (this.fighters.player.health === this.fighters.enemy.health) {
             document.querySelector("#displayText").innerHTML = "Tie";
+            removeKeyDown();
+            Object.values(this.fighters).forEach(fighter => {
+                fighter.velocity.x = 0;
+                fighter.switchSprite("idle");
+            });
+            removeKeyUp();
+            this.gameOver = true;
         } else if (this.fighters.player.health >= this.fighters.enemy.health) {
             document.querySelector("#displayText").innerHTML = "Player 1 Wins";
+            if (this.timer.timer === 0) {
+                removeKeyDown();
+                Object.values(this.fighters).forEach(fighter => {
+                    fighter.velocity.x = 0;
+                    fighter.isAttacking = false;
+                    fighter.switchSprite("idle");
+                });
+                this.fighters.enemy.switchSprite("death");
+                if (this.fighters.enemy.framesCurrent == this.fighters.enemy.death.framesMax) {
+                    this.gameOver = true;
+                }
+                removeKeyUp();
+            }
+
         } else if (this.fighters.player.health <= this.fighters.enemy.health) {
             document.querySelector("#displayText").innerHTML = "Enemy Wins";
+            if (this.timer.timer === 0) {
+                removeKeyDown();
+                Object.values(this.fighters).forEach(fighter => {
+                    fighter.switchSprite("idle");
+                    fighter.velocity.x = 0;
+                    fighter.isAttacking = false;
+                });
+                this.fighters.player.switchSprite("death");
+                if (this.fighters.player.framesCurrent == this.fighters.player.death.framesMax) {
+                    this.gameOver = true;
+                }
+                removeKeyUp();
+            }
         }
     }
 

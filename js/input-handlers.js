@@ -1,3 +1,6 @@
+let keyDownListener = null;
+let keyUpListener = null;
+
 function handleKeyDown (event, player, enemy) {
     if (!player.dead) {
         switch (event.key) {
@@ -69,9 +72,26 @@ function handleKeyUp (event, player, enemy) {
     }
 }
 
+
 export function addKeyListeners(fighters) {
     let player = fighters.player;
     let enemy = fighters.enemy;
-    window.addEventListener("keydown", (event) => handleKeyDown(event, player, enemy));
-    window.addEventListener("keyup", (event) => handleKeyUp(event, player, enemy));
+
+    keyDownListener = (event) => handleKeyDown(event, player, enemy);
+    keyUpListener = (event) => handleKeyUp(event, player, enemy);
+
+    window.addEventListener("keydown", keyDownListener);
+    window.addEventListener("keyup", keyUpListener);
+}
+
+export function removeKeyDown() {
+    if (keyDownListener) {
+        window.removeEventListener("keydown", keyDownListener);
+    }
+}
+
+export function removeKeyUp() {
+    if (keyUpListener) {
+        window.removeEventListener("keyup", keyUpListener);
+    }
 }
